@@ -146,15 +146,21 @@ module HTB
 
       desc "own MACHINE_ID --flag FLAG", "Submit a flag for ownership"
       option :flag, required: true, desc: "The flag to submit"
+      option :type, type: :string, enum: %w[user root auto], default: "auto", desc: "Flag type: user, root, or auto (default)"
       option :difficulty, type: :numeric, default: 50, desc: "Difficulty rating (10-100)"
       def own(machine_id)
         client = CLI.client
-        result = CLI.spinner("Submitting flag...") do
-          client.machines.own(
-            machine_id: machine_id.to_i,
-            flag: options[:flag],
-            difficulty: options[:difficulty]
-          )
+        flag_type = options[:type]
+
+        result = CLI.spinner("Submitting #{flag_type} flag...") do
+          case flag_type
+          when "user"
+            client.machines.own_user(machine_id.to_i, flag: options[:flag], difficulty: options[:difficulty])
+          when "root"
+            client.machines.own_root(machine_id.to_i, flag: options[:flag], difficulty: options[:difficulty])
+          else
+            client.machines.own(machine_id: machine_id.to_i, flag: options[:flag], difficulty: options[:difficulty])
+          end
         end
 
         if result && result["success"]

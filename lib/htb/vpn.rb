@@ -13,9 +13,9 @@ module HTB
     end
 
     # Get current VPN connection status
-    # GET /api/v4/connections/status
+    # GET /api/v4/connection/status
     def status
-      @client.get("/connections/status")
+      @client.get("/connection/status")
     end
 
     # Switch VPN server

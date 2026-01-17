@@ -49,9 +49,9 @@ module HTB
     end
 
     # Get active VM
-    # GET /api/v4/vm/active
+    # GET /api/v4/machine/active
     def active
-      @client.get("/vm/active")
+      @client.get("/machine/active")
     end
 
     # Transfer VM to another lab

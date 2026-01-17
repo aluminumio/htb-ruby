@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "lib/htb/version"
+
 Gem::Specification.new do |spec|
   spec.name          = "htb"
-  spec.version       = "0.1.0"
+  spec.version       = HTB::VERSION
   spec.authors       = ["usiegj00"]
   spec.email         = ["usiegj00@users.noreply.github.com"]
 

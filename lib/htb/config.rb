@@ -12,7 +12,8 @@ module HTB
         return {} unless File.exist?(CONFIG_FILE)
 
         content = File.read(CONFIG_FILE)
-        YAML.safe_load(content, symbolize_names: true) || {}
+        result = YAML.safe_load(content, symbolize_names: true)
+        result.is_a?(Hash) ? result : {}
       rescue StandardError
         {}
       end

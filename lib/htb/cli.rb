@@ -6,12 +6,12 @@ require "tty-spinner"
 require "tty-prompt"
 require "pastel"
 
-require_relative "cli/main"
 require_relative "cli/machines"
 require_relative "cli/vm"
 require_relative "cli/users"
 require_relative "cli/challenges"
 require_relative "cli/vpn"
+require_relative "cli/main"
 
 module HTB
   module CLI

@@ -44,7 +44,7 @@ module HTB
             CLI.print_table(
               ["Field", "Value"],
               [
-                ["Machine", info["name"] || "N/A"],
+                ["Challenge", info["name"] || "N/A"],
                 ["IP", info["ip"] || "N/A"],
                 ["Type", info["type"] || "N/A"],
                 ["Expires", info["expires_at"] || "N/A"]
@@ -60,18 +60,26 @@ module HTB
         puts CLI.pastel.bold("\n=== VPN Status ===")
         begin
           vpn_status = CLI.spinner("Fetching VPN status...") { client.vpn.status }
-          if vpn_status && vpn_status["data"]
-            data = vpn_status["data"]
-            CLI.print_table(
-              ["Field", "Value"],
-              [
-                ["Connected", data["connection"] ? "Yes" : "No"],
-                ["Server", data["server"] || "N/A"],
-                ["IP", data["ip"] || "N/A"]
-              ]
-            )
+          if vpn_status.is_a?(Array) && !vpn_status.empty?
+            vpn_status.each do |conn|
+              server = conn["server"] || {}
+              connection = conn["connection"] || {}
+              CLI.print_table(
+                ["Field", "Value"],
+                [
+                  ["Type", conn["type"] || "N/A"],
+                  ["Location", conn["location_type_friendly"] || "N/A"],
+                  ["Server", server["friendly_name"] || "N/A"],
+                  ["Connected", connection["name"] ? "Yes" : "No"],
+                  ["IPv4", connection["ip4"] || "N/A"],
+                  ["IPv6", connection["ip6"] || "N/A"],
+                  ["Down", connection["down"] ? "#{connection['down']} KB/s" : "N/A"],
+                  ["Up", connection["up"] ? "#{connection['up']} KB/s" : "N/A"]
+                ]
+              )
+            end
           else
-            CLI.print_info("VPN status unavailable")
+            CLI.print_info("No active VPN connections")
           end
         rescue HTB::Error => e
           CLI.print_error(e.message)

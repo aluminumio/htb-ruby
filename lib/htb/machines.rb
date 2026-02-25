@@ -6,10 +6,16 @@ module HTB
       @client = client
     end
 
-    # List all machines
-    # GET /api/v4/machine/list
+    # List active machines (current season)
+    # GET /api/v4/machine/paginated
     def list
-      @client.get("/machine/list")
+      paginate("/machine/paginated")
+    end
+
+    # List all retired machines (full VIP+ back catalog)
+    # GET /api/v4/machine/list/retired/paginated
+    def retired
+      paginate("/machine/list/retired/paginated")
     end
 
     # Get machine profile by ID or name
@@ -38,9 +44,6 @@ module HTB
 
     # Submit flag for machine ownership
     # POST /api/v4/machine/own
-    # @param machine_id [Integer] Machine ID
-    # @param flag [String] The flag to submit
-    # @param difficulty [Integer] Difficulty rating (10-100)
     def own(machine_id:, flag:, difficulty: 50)
       @client.post("/machine/own", {
         id: machine_id,
@@ -87,10 +90,6 @@ module HTB
 
     # Submit machine review
     # POST /api/v4/machine/review
-    # @param machine_id [Integer] Machine ID
-    # @param stars [Integer] Star rating (1-5)
-    # @param headline [String] Review headline
-    # @param review [String] Review text
     def review(machine_id:, stars:, headline:, review:)
       @client.post("/machine/review", {
         id: machine_id,
@@ -112,31 +111,37 @@ module HTB
       @client.get("/machine/spawned")
     end
 
-    # Get retired machines
-    # GET /api/v4/machine/list/retired
-    def retired
-      @client.get("/machine/list/retired")
-    end
-
     # Get starting point machines
     # GET /api/v4/machine/list/sp
     def starting_point
       @client.get("/machine/list/sp")
     end
 
-    # Get paginated machine list
-    # GET /api/v4/machine/paginated
-    def paginated(page: 1, per_page: 20, sort_by: nil, sort_type: nil)
-      params = { page: page, per_page: per_page }
-      params[:sort_by] = sort_by if sort_by
-      params[:sort_type] = sort_type if sort_type
-      @client.get("/machine/paginated", params)
-    end
-
     # Search machines
     # GET /api/v4/search/fetch?query={query}&tags=[]
     def search(query, tags: [])
       @client.get("/search/fetch", { query: query, tags: tags })
+    end
+
+    private
+
+    # Fetch all pages from a paginated endpoint and return unified hash
+    # with "info" key for CLI compatibility
+    def paginate(path)
+      all_machines = []
+      page = 1
+      loop do
+        result = @client.get(path, { page: page, per_page: 100 })
+        data = result["data"] || []
+        break if data.empty?
+
+        all_machines.concat(data)
+        last_page = result.dig("meta", "last_page") || 1
+        break if page >= last_page
+
+        page += 1
+      end
+      { "info" => all_machines }
     end
   end
 end

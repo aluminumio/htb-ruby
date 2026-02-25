@@ -7,9 +7,11 @@ module HTB
         true
       end
 
-      desc "list", "List all active machines"
+      desc "list", "List machines"
       option :retired, type: :boolean, desc: "Show retired machines instead"
       option :sp, type: :boolean, desc: "Show Starting Point machines"
+      option :unsolved, type: :boolean, desc: "Show only unsolved machines"
+      option :difficulty, type: :string, desc: "Filter by difficulty (Easy, Medium, Hard, Insane)"
       def list
         client = CLI.client
 
@@ -24,23 +26,42 @@ module HTB
         end
 
         if machines && machines["info"]
-          rows = machines["info"].map do |m|
+          machine_list = machines["info"]
+
+          if options[:unsolved]
+            machine_list = machine_list.reject do |m|
+              m["authUserInUserOwns"] && m["authUserInRootOwns"]
+            end
+          end
+
+          if options[:difficulty]
+            diff = options[:difficulty].downcase
+            machine_list = machine_list.select do |m|
+              (m["difficultyText"] || "").downcase == diff
+            end
+          end
+
+          rows = machine_list.map do |m|
             difficulty = m["difficultyText"] || m["difficulty"] || "N/A"
             os = m["os"] || "N/A"
+            user_own = m["authUserInUserOwns"] ? CLI.pastel.green("Y") : CLI.pastel.red("-")
+            root_own = m["authUserInRootOwns"] ? CLI.pastel.green("Y") : CLI.pastel.red("-")
             [
               m["id"],
               m["name"],
               os,
               difficulty,
-              m["user_owns_count"] || 0,
-              m["root_owns_count"] || 0,
-              m["release"] || "N/A"
+              user_own,
+              root_own,
+              m["release"]&.slice(0, 10) || "N/A"
             ]
           end
 
-          puts CLI.pastel.bold("\nMachines:")
+          label = options[:retired] ? "Retired" : options[:sp] ? "Starting Point" : "Active"
+          label += " (unsolved)" if options[:unsolved]
+          puts CLI.pastel.bold("\n#{label} Machines:")
           CLI.print_table(
-            ["ID", "Name", "OS", "Difficulty", "User Owns", "Root Owns", "Released"],
+            ["ID", "Name", "OS", "Difficulty", "User", "Root", "Released"],
             rows
           )
           puts "\nTotal: #{rows.size} machines"
